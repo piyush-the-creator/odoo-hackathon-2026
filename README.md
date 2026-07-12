@@ -1,9 +1,11 @@
 # odoo-hackathon-2026
-# Project Name
+# TransitOps
 
-## Team Name
+## Team
 
-## Problem Statement
+Team Name
+
+# Problem Statement
 
 TransitOps Smart Transport Operations Platform
 
@@ -15,28 +17,22 @@ TransitOps Smart Transport Operations Platform
 
 ## Tech Stack
 
-- React
-- Node.js
-- Express
-- PostgreSQL
-- Docker
+Frontend
 
-## Features
+Backend
 
-- upcoming...
-  
-## Installation
-
-Steps to run the project.
+Database
 
 ## Folder Structure
 
-Explain frontend/backend folders.
+Frontend
 
-## Screenshots
+Backend
 
-(later)
+Database
 
-## Future Scope
+Docs
 
-(later)
+## Status
+
+Project Setup
