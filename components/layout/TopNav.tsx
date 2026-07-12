@@ -17,6 +17,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { NotificationCenter } from "@/components/notifications/NotificationCenter";
+
 export function TopNav() {
   const { data: session } = useSession();
   const userName = session?.user?.name || "User";
@@ -49,16 +52,8 @@ export function TopNav() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative rounded-full"
-          >
-            <Bell className="h-5 w-5" />
-            <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full bg-red-500 p-0 text-xs text-white flex items-center justify-center font-bold">
-              3
-            </Badge>
-          </Button>
+          <ThemeToggle />
+          <NotificationCenter />
 
           <DropdownMenu>
             <DropdownMenuTrigger
