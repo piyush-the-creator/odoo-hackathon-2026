@@ -1,0 +1,340 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============ ENUMS ============
+enum RoleName {
+  ADMIN
+  FLEET_MANAGER
+  DRIVER
+  SAFETY_OFFICER
+  FINANCIAL_ANALYST
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  ON_TRIP
+  IN_SHOP
+  RETIRED
+}
+
+enum VehicleType {
+  TRUCK
+  VAN
+  MINI_TRUCK
+  PICKUP
+  TRAILER
+  BUS
+  OTHER
+}
+
+enum DriverStatus {
+  AVAILABLE
+  ON_TRIP
+  OFF_DUTY
+  SUSPENDED
+}
+
+enum TripStatus {
+  DRAFT
+  ASSIGNED
+  DISPATCHED
+  IN_PROGRESS
+  EMERGENCY_HALTED
+  COMPLETED
+  CANCELLED
+}
+
+enum MaintenanceStatus {
+  PENDING
+  APPROVED
+  IN_PROGRESS
+  COMPLETED
+  REJECTED
+}
+
+enum MaintenancePriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum MaintenanceType {
+  OIL_CHANGE
+  ENGINE_REPAIR
+  BRAKE_SERVICE
+  TYRE_REPLACEMENT
+  ELECTRICAL
+  OTHER
+}
+
+enum BreakdownSeverity {
+  LOW
+  MEDIUM
+  CRITICAL
+}
+
+enum BreakdownStatus {
+  REPORTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum ExpenseType {
+  FUEL
+  MAINTENANCE
+  TOLL
+  PARKING
+  REPAIR
+  PENALTY
+  INSURANCE
+  OTHER
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+}
+
+// ============ MODELS ============
+model Role {
+  id        String    @id @default(cuid())
+  name      RoleName  @unique
+  users     User[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model User {
+  id               String          @id @default(cuid())
+  name             String
+  email            String          @unique
+  passwordHash     String
+  phone            String?
+  roleId           String
+  role             Role            @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  status           UserStatus      @default(ACTIVE)
+  profileImage     String?
+  lastLogin        DateTime?
+  driverProfile    DriverProfile?
+  createdTrips     Trip[]          @relation("TripCreator")
+  maintenanceRequests MaintenanceRequest[] @relation("MaintenanceRequester")
+  breakdownRequests   BreakdownRequest[]   @relation("BreakdownRequester")
+  breakdownReviews    BreakdownRequest[]   @relation("BreakdownReviewer")
+  expenses         Expense[]
+  activityLogs     ActivityLog[]
+  notifications    Notification[]
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@map("users")
+}
+
+model DriverProfile {
+  id              String        @id @default(cuid())
+  userId          String        @unique
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  licenseNumber   String        @unique
+  licenseCategory String
+  licenseExpiry   DateTime
+  safetyScore     Int           @default(100)
+  joiningDate     DateTime      @default(now())
+  experienceYears Int           @default(0)
+  status          DriverStatus  @default(AVAILABLE)
+  trips           Trip[]        @relation("DriverTrips")
+  fuelLogs        FuelLog[]
+  breakdownRequests BreakdownRequest[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("driver_profiles")
+}
+
+model Vehicle {
+  id                   String          @id @default(cuid())
+  registrationNumber   String          @unique
+  vehicleName          String
+  vehicleType          VehicleType
+  manufacturer         String
+  model                String
+  year                 Int
+  fuelType             String
+  maximumLoadCapacity  Float           @default(0)
+  odometer             Float           @default(0)
+  acquisitionCost      Float           @default(0)
+  purchaseDate         DateTime
+  insuranceExpiry      DateTime
+  fitnessExpiry        DateTime
+  status               VehicleStatus   @default(AVAILABLE)
+  currentLocation      String?
+  notes                String?
+  trips                Trip[]
+  fuelLogs             FuelLog[]
+  expenses             Expense[]
+  maintenanceRequests  MaintenanceRequest[]
+  breakdownRequests    BreakdownRequest[]
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  @@map("vehicles")
+}
+
+model Trip {
+  id                String          @id @default(cuid())
+  tripNumber        String          @unique
+  vehicleId         String
+  vehicle           Vehicle         @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
+  driverId          String
+  driver            DriverProfile   @relation(fields: [driverId], references: [id], onDelete: Restrict, name: "DriverTrips")
+  source            String
+  destination       String
+  plannedDistance   Float
+  actualDistance    Float?
+  cargoWeight       Float           @default(0)
+  revenue           Float           @default(0)
+  departureTime     DateTime?
+  arrivalTime       DateTime?
+  status            TripStatus      @default(DRAFT)
+  remarks           String?
+  createdById       String
+  createdBy         User            @relation(fields: [createdById], references: [id], onDelete: Restrict, name: "TripCreator")
+  fuelLogs          FuelLog[]
+  expenses          Expense[]
+  breakdownRequests BreakdownRequest[]
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@map("trips")
+}
+
+model FuelLog {
+  id          String   @id @default(cuid())
+  tripId      String
+  trip        Trip     @relation(fields: [tripId], references: [id], onDelete: Restrict)
+  vehicleId   String
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
+  driverId    String
+  driver      DriverProfile @relation(fields: [driverId], references: [id], onDelete: Restrict)
+  liters      Float
+  cost        Float
+  odometer    Float
+  fuelStation String?
+  fuelDate    DateTime @default(now())
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  @@map("fuel_logs")
+}
+
+model Expense {
+  id          String      @id @default(cuid())
+  tripId      String?
+  trip        Trip?       @relation(fields: [tripId], references: [id], onDelete: SetNull)
+  vehicleId   String
+  vehicle     Vehicle     @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
+  expenseType ExpenseType
+  amount      Float
+  expenseDate DateTime    @default(now())
+  description String?
+  receiptUrl  String?
+  createdById String
+  createdBy   User        @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime    @default(now())
+
+  @@map("expenses")
+}
+
+model MaintenanceRequest {
+  id                 String             @id @default(cuid())
+  vehicleId          String
+  vehicle            Vehicle            @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
+  requestedById      String
+  requestedBy        User               @relation(fields: [requestedById], references: [id], onDelete: Restrict, name: "MaintenanceRequester")
+  maintenanceType    MaintenanceType
+  priority           MaintenancePriority @default(MEDIUM)
+  description        String
+  estimatedCost      Float?
+  actualCost         Float?
+  approvedById       String?
+  assignedTechnician String?
+  status             MaintenanceStatus  @default(PENDING)
+  approvedAt         DateTime?
+  completedAt        DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@map("maintenance_requests")
+}
+
+model BreakdownRequest {
+  id             String            @id @default(cuid())
+  tripId         String
+  trip           Trip              @relation(fields: [tripId], references: [id], onDelete: Restrict)
+  vehicleId      String
+  vehicle        Vehicle           @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
+  driverId       String
+  driver         DriverProfile     @relation(fields: [driverId], references: [id], onDelete: Restrict)
+  requestedById  String
+  requestedBy    User              @relation(fields: [requestedById], references: [id], onDelete: Restrict, name: "BreakdownRequester")
+  issueType      String
+  severity       BreakdownSeverity
+  description    String
+  photoUrl       String?
+  videoUrl       String?
+  voiceNoteUrl   String?
+  latitude       Float?
+  longitude      Float?
+  status         BreakdownStatus   @default(REPORTED)
+  reviewedById   String?
+  reviewedBy     User?             @relation(fields: [reviewedById], references: [id], onDelete: SetNull, name: "BreakdownReviewer")
+  reviewRemarks  String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@map("breakdown_requests")
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  title       String
+  message     String
+  type        NotificationType @default(INFO)
+  recipientId String
+  recipient   User             @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  isRead      Boolean          @default(false)
+  actionUrl   String?
+  createdAt   DateTime         @default(now())
+
+  @@map("notifications")
+}
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action     String
+  module     String
+  recordId   String?
+  ipAddress  String?
+  device     String?
+  createdAt  DateTime @default(now())
+
+  @@map("activity_logs")
+}
