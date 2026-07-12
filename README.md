@@ -3,7 +3,7 @@
 
 ## Team
 
-Team Name
+TransitOps
 
 # Problem Statement
 
@@ -17,17 +17,31 @@ TransitOps Smart Transport Operations Platform
 
 ## Tech Stack
 
-- **Frontend**: Next.js 15 (App Router), TypeScript, Tailwind CSS, shadcn/ui
-- **Backend**: Next.js Server Actions / API Routes, Prisma ORM
-- **Database**: Supabase PostgreSQL
+- **Framework**: Next.js (App Router, TypeScript, Tailwind CSS)
+- **UI Components**: Shadcn UI (Radix UI)
+- **ORM & Database**: Prisma
 
 ## Folder Structure
 
-- `/app`: Next.js App Router Pages and Layouts
-- `/components`: Reusable shadcn/ui and custom layout components
-- `/lib`: Helper utilities and shared database client
-- `/prisma`: Database schemas and seed scripts
+- `app/` - Next.js pages and layout components
+- `components/` - Shared UI components
+- `prisma/` - Database schemas and migration files
+- `public/` - Static assets
 
 ## Status
 
-Project Setup & Database Seed Completed
+Project Setup
+
+---
+
+## Getting Started
+
+First, run the development server:
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
